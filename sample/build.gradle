@@ -47,4 +47,6 @@ dependencies {
     implementation rootProject.ext.dependencies.json
     implementation rootProject.ext.dependencies.commonsLang
     implementation rootProject.ext.dependencies.commonsCollections
+
+    implementation 'org.greenrobot:eventbus:3.0.0'
 }

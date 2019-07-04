@@ -22,10 +22,14 @@ import com.yanzhenjie.andserver.http.cookie.Cookie;
 import com.yanzhenjie.andserver.http.multipart.MultipartFile;
 import com.yanzhenjie.andserver.http.session.Session;
 import com.yanzhenjie.andserver.sample.component.LoginInterceptor;
+import com.yanzhenjie.andserver.sample.model.EventBusMessageId;
+import com.yanzhenjie.andserver.sample.model.EventWrapper;
 import com.yanzhenjie.andserver.sample.model.UserInfo;
 import com.yanzhenjie.andserver.sample.util.FileUtils;
 import com.yanzhenjie.andserver.sample.util.Logger;
 import com.yanzhenjie.andserver.util.MediaType;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,11 +73,20 @@ class TestController {
         return userInfo;
     }
 
-    @PostMapping(path = "/upload", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    String upload(@RequestParam(name = "header") MultipartFile file) throws IOException {
+    @PostMapping(path = "/upload")
+    String upload(@RequestParam(name = "uploadFile") MultipartFile file) throws IOException {
         File localFile = FileUtils.createRandomFile(file);
         file.transferTo(localFile);
-        return localFile.getAbsolutePath();
+        Logger.d("Path: " + localFile.getAbsolutePath());
+        EventBus.getDefault().post(new EventWrapper<>(EventBusMessageId.MSG_LIVEHALL_UPLOAD_FILE, localFile.getAbsolutePath()));
+        return "Exclude is successful.";
+    }
+
+    @GetMapping(path = "/chat")
+    String chat(@RequestParam(name = "message") String message) {
+        Logger.i("message: " + message);
+        EventBus.getDefault().post(new EventWrapper<>(EventBusMessageId.MSG_LIVEHALL_GET_MESSAGE, message));
+        return "Exclude is successful.";
     }
 
     @GetMapping(path = "/consume", consumes = {"application/json", "!application/xml"})

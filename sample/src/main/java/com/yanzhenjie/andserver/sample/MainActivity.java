@@ -23,13 +23,21 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.yanzhenjie.andserver.sample.model.EventBusMessageId;
+import com.yanzhenjie.andserver.sample.model.EventWrapper;
+import com.yanzhenjie.andserver.sample.util.CopyHelper;
 import com.yanzhenjie.loading.dialog.LoadingDialog;
 
+import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 /**
  * Created by Zhenjie Yan on 2018/6/9.
@@ -49,6 +57,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EventBus.getDefault().register(this);
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -154,5 +164,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void closeDialog() {
         if (mDialog != null && mDialog.isShowing()) mDialog.dismiss();
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onEventBusMainThread(EventWrapper eventWrap) {
+        if (eventWrap == null) {
+            return;
+        }
+        int code = eventWrap.getEventCode();
+        switch (code) {
+            case EventBusMessageId.MSG_LIVEHALL_GET_MESSAGE:
+                String message = (String) eventWrap.getData();
+                CopyHelper.copy(this, message);
+                break;
+            case EventBusMessageId.MSG_LIVEHALL_UPLOAD_FILE:
+                String url = (String) eventWrap.getData();
+                File file = new File(url);
+                File parentFlie = new File(file.getParent());
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setDataAndType(Uri.fromFile(parentFlie), "*/*");
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                startActivity(intent);
+                break;
+            default:
+                break;
+        }
     }
 }
