@@ -17,16 +17,36 @@ package com.yanzhenjie.andserver.sample.controller;
 
 import com.yanzhenjie.andserver.annotation.Controller;
 import com.yanzhenjie.andserver.annotation.GetMapping;
+import com.yanzhenjie.andserver.annotation.ResponseBody;
 
 /**
- * Created by Zhenjie Yan on 2018/9/12.
+ * 不需要任何注册或者配置
  */
 @Controller
-public class PageController {
+public class TestPageController {
 
+    /**
+     * 请求转发
+     * @return
+     */
     @GetMapping(path = "/")
     public String index() {
         // Equivalent to [return "/index"].
         return "forward:/index.html";
+    }
+
+    /**
+     * 重定向
+     * @return
+     */
+    @GetMapping("/projectInfo")
+    public String oldInfo() {
+        return "redirect:/project/info";
+    }
+
+    @ResponseBody
+    @GetMapping("/project/info")
+    public String newInfo() {
+        return "I am new api.";
     }
 }

@@ -22,26 +22,25 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.yanzhenjie.andserver.sample.model.EventBusMessageId;
 import com.yanzhenjie.andserver.sample.model.EventWrapper;
 import com.yanzhenjie.andserver.sample.util.CopyHelper;
+import com.yanzhenjie.andserver.sample.util.CustomFileProvider;
+import com.yanzhenjie.andserver.sample.website.PathManager;
 import com.yanzhenjie.loading.dialog.LoadingDialog;
-
-import java.io.File;
-import java.util.LinkedList;
-import java.util.List;
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-/**
- * Created by Zhenjie Yan on 2018/6/9.
- */
+import java.io.File;
+import java.util.LinkedList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private ServerManager mServerManager;
@@ -50,6 +49,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mBtnStop;
     private Button mBtnBrowser;
     private TextView mTvMessage;
+    private TextView mTvPath;
+    private Button mBtnWebFolder;
 
     private LoadingDialog mDialog;
     private String mRootUrl;
@@ -60,17 +61,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         EventBus.getDefault().register(this);
 
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         mBtnStart = findViewById(R.id.btn_start);
         mBtnStop = findViewById(R.id.btn_stop);
+        mBtnWebFolder = findViewById(R.id.btn_web);
         mBtnBrowser = findViewById(R.id.btn_browse);
         mTvMessage = findViewById(R.id.tv_message);
+        mTvPath = findViewById(R.id.tv_down_path);
 
         mBtnStart.setOnClickListener(this);
         mBtnStop.setOnClickListener(this);
         mBtnBrowser.setOnClickListener(this);
+        mBtnWebFolder.setOnClickListener(this);
+
 
         // AndServer run in the service.
         mServerManager = new ServerManager(this);
@@ -107,6 +110,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     intent.setData(Uri.parse(mRootUrl));
                     startActivity(intent);
                 }
+                break;
+            }
+            case R.id.btn_web: {
+                File folder = new File(PathManager.getInstance().getWebDir());
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setDataAndType(Uri.fromFile(folder), "*/*");
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                startActivity(intent);
                 break;
             }
         }
@@ -178,6 +189,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 CopyHelper.copy(this, message);
                 break;
             case EventBusMessageId.MSG_LIVEHALL_UPLOAD_FILE:
+                Toast.makeText(this, "上传成功", Toast.LENGTH_SHORT).show();
+
                 String url = (String) eventWrap.getData();
                 File file = new File(url);
                 File parentFlie = new File(file.getParent());
@@ -189,5 +202,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             default:
                 break;
         }
+    }
+
+    private static final int FILE_SELECT_CODE = 0;
+    private void showFileChooser() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        try {
+            startActivityForResult( Intent.createChooser(intent, "Select a File to Upload"), FILE_SELECT_CODE);
+        } catch (android.content.ActivityNotFoundException ex) {
+            // Potentially direct the user to the Market with a Dialog
+            Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case FILE_SELECT_CODE:
+                if (resultCode == RESULT_OK) {
+                    Uri uri = data.getData();
+                    // Get the path
+                    CustomFileProvider.PathStrategy pathStrategy = CustomFileProvider.getPathStrategy(this, getPackageName() + ".fileprovider");
+                    String finalPath = pathStrategy.getFileForUri(uri).getAbsolutePath();
+                    mTvPath.setText(finalPath);
+                }
+                break;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 }

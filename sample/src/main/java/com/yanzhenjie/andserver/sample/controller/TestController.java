@@ -15,28 +15,33 @@
  */
 package com.yanzhenjie.andserver.sample.controller;
 
-import com.yanzhenjie.andserver.annotation.*;
+import com.yanzhenjie.andserver.annotation.Addition;
+import com.yanzhenjie.andserver.annotation.CookieValue;
+import com.yanzhenjie.andserver.annotation.FormPart;
+import com.yanzhenjie.andserver.annotation.GetMapping;
+import com.yanzhenjie.andserver.annotation.PathVariable;
+import com.yanzhenjie.andserver.annotation.PostMapping;
+import com.yanzhenjie.andserver.annotation.PutMapping;
+import com.yanzhenjie.andserver.annotation.RequestBody;
+import com.yanzhenjie.andserver.annotation.RequestMapping;
+import com.yanzhenjie.andserver.annotation.RequestParam;
+import com.yanzhenjie.andserver.annotation.RestController;
 import com.yanzhenjie.andserver.http.HttpRequest;
 import com.yanzhenjie.andserver.http.HttpResponse;
 import com.yanzhenjie.andserver.http.cookie.Cookie;
-import com.yanzhenjie.andserver.http.multipart.MultipartFile;
 import com.yanzhenjie.andserver.http.session.Session;
 import com.yanzhenjie.andserver.sample.component.LoginInterceptor;
-import com.yanzhenjie.andserver.sample.model.EventBusMessageId;
-import com.yanzhenjie.andserver.sample.model.EventWrapper;
 import com.yanzhenjie.andserver.sample.model.UserInfo;
-import com.yanzhenjie.andserver.sample.util.FileUtils;
 import com.yanzhenjie.andserver.sample.util.Logger;
 import com.yanzhenjie.andserver.util.MediaType;
 
-import org.greenrobot.eventbus.EventBus;
-
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 /**
- * Created by Zhenjie Yan on 2018/6/9.
+ * RestController注解作用：
+ * 添加了Controller注解的控制器中的方法的返回值经过ViewResolver分析，如果是ResponseBody则会直接写出到客户端、如果是其它类型的数据会先经过MessageConverter转化成ResponseBody再输出到客户端，如果开发者没有提供MessageConverter怎会将返回值toString()后组成StringBody输出。
+ * MessageConverter非常有用，比如将客户端的参数转化为Model，将服务端的Model转化为JSON、Prorobuf等个时候输出等，具体使用方法请参考MessageConveter类和Converter注解。
+ * 根据字面意思RestController就是写RESTFUL风格的Api的，因此它更加适合输出一些JSON格式、Protubuf格式的数据。
  */
 @RestController
 @RequestMapping(path = "/user")
@@ -71,22 +76,6 @@ class TestController {
         userInfo.setUserId("123");
         userInfo.setUserName("AndServer");
         return userInfo;
-    }
-
-    @PostMapping(path = "/upload")
-    String upload(@RequestParam(name = "uploadFile") MultipartFile file) throws IOException {
-        File localFile = FileUtils.createRandomFile(file);
-        file.transferTo(localFile);
-        Logger.d("Path: " + localFile.getAbsolutePath());
-        EventBus.getDefault().post(new EventWrapper<>(EventBusMessageId.MSG_LIVEHALL_UPLOAD_FILE, localFile.getAbsolutePath()));
-        return "Exclude is successful.";
-    }
-
-    @GetMapping(path = "/chat")
-    String chat(@RequestParam(name = "message") String message) {
-        Logger.i("message: " + message);
-        EventBus.getDefault().post(new EventWrapper<>(EventBusMessageId.MSG_LIVEHALL_GET_MESSAGE, message));
-        return "Exclude is successful.";
     }
 
     @GetMapping(path = "/consume", consumes = {"application/json", "!application/xml"})
@@ -124,11 +113,21 @@ class TestController {
         return "NoName is successful.";
     }
 
+    /**
+     * JavaBean形式的映射
+     * @param userInfo
+     * @return
+     */
     @PostMapping(path = "/formPart")
     UserInfo forPart(@FormPart(name = "user") UserInfo userInfo) {
         return userInfo;
     }
 
+    /**
+     * JavaBean形式的映射
+     * @param userInfo
+     * @return
+     */
     @PostMapping(path = "/jsonBody")
     UserInfo jsonBody(@RequestBody UserInfo userInfo) {
         return userInfo;

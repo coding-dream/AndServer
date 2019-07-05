@@ -20,6 +20,7 @@ import android.webkit.MimeTypeMap;
 
 import com.yanzhenjie.andserver.http.multipart.MultipartFile;
 import com.yanzhenjie.andserver.sample.App;
+import com.yanzhenjie.andserver.sample.website.PathManager;
 import com.yanzhenjie.andserver.util.StringUtils;
 
 import java.io.File;
@@ -43,7 +44,11 @@ public class FileUtils {
             extension = MimeTypeMap.getFileExtensionFromUrl(file.getFilename());
         }
         String uuid = UUID.randomUUID().toString();
-        return new File(App.getInstance().getRootDir(), uuid + "." + extension);
+        return new File(PathManager.getInstance().getWebDir(), uuid + "." + extension);
+    }
+
+    public static File createWebSiteFile(MultipartFile file) {
+        return new File(PathManager.getInstance().getWebDir() + File.separator + "files", file.getFilename());
     }
 
     /**
