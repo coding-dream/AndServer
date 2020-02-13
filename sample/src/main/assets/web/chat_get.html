@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="format-detection" content="telephone=no"/>
+    <link rel="stylesheet" type="text/css" href="css/login.css">
+    <title>与服务器通信</title>
+    <script type="text/javascript">
+        function copyLink(){
+            var e = document.getElementById("copy");
+            e.select(); // 选择对象
+            document.execCommand("Copy"); // 执行浏览器复制命令
+            alert("内容复制成功！");
+        }
+    </script>
+</head>
+
+<body>
+    <textarea id="copy">待复制的内容</textarea>
+    <input type="button" onclick="copyLink()" value="点击复制"/>
+</body>
+</html>
