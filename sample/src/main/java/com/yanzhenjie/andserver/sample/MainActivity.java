@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,7 +51,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mBtnBrowser;
     private TextView mTvMessage;
     private TextView mTvPath;
+    private EditText mEtSendMessage;
     private Button mBtnWebFolder;
+    private Button mBtnSendMessage;
 
     private LoadingDialog mDialog;
     private String mRootUrl;
@@ -68,12 +71,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mBtnBrowser = findViewById(R.id.btn_browse);
         mTvMessage = findViewById(R.id.tv_message);
         mTvPath = findViewById(R.id.tv_down_path);
+        mEtSendMessage = findViewById(R.id.et_send_text_to_other);
+        mBtnSendMessage = findViewById(R.id.btn_send_message);
 
         mBtnStart.setOnClickListener(this);
         mBtnStop.setOnClickListener(this);
         mBtnBrowser.setOnClickListener(this);
         mBtnWebFolder.setOnClickListener(this);
-
+        mBtnSendMessage.setOnClickListener(this);
 
         // AndServer run in the service.
         mServerManager = new ServerManager(this);
@@ -118,6 +123,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 intent.setDataAndType(Uri.fromFile(folder), "*/*");
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 startActivity(intent);
+                break;
+            }
+            case R.id.btn_send_message: {
+                String sendMessage = mEtSendMessage.getText().toString();
+                GlobalValueMananger.getInstance().tempMessage = sendMessage;
+                Toast.makeText(this, "发送成功，请主动访问浏览器", Toast.LENGTH_SHORT).show();
                 break;
             }
         }

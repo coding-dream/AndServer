@@ -1,5 +1,7 @@
 package com.yanzhenjie.andserver.sample.controller;
 
+import android.text.TextUtils;
+
 import com.yanzhenjie.andserver.annotation.Controller;
 import com.yanzhenjie.andserver.annotation.GetMapping;
 import com.yanzhenjie.andserver.annotation.PostMapping;
@@ -7,9 +9,8 @@ import com.yanzhenjie.andserver.annotation.RequestParam;
 import com.yanzhenjie.andserver.annotation.ResponseBody;
 import com.yanzhenjie.andserver.framework.body.FileBody;
 import com.yanzhenjie.andserver.framework.body.StringBody;
-import com.yanzhenjie.andserver.framework.website.FileBrowser;
-import com.yanzhenjie.andserver.http.HttpRequest;
 import com.yanzhenjie.andserver.http.multipart.MultipartFile;
+import com.yanzhenjie.andserver.sample.GlobalValueMananger;
 import com.yanzhenjie.andserver.sample.model.EventBusMessageId;
 import com.yanzhenjie.andserver.sample.model.EventWrapper;
 import com.yanzhenjie.andserver.sample.util.FileUtils;
@@ -43,6 +44,15 @@ public class TxController {
         return "redirect:/index.html";
     }
 
+    @GetMapping(path = "/chat_get")
+    @ResponseBody
+    StringBody chatGet() {
+        if (TextUtils.isEmpty(GlobalValueMananger.getInstance().tempMessage)) {
+            return new StringBody("暂无信息");
+        }
+        return new StringBody(GlobalValueMananger.getInstance().tempMessage);
+    }
+
     /**
      * 直接返回XXBody，省略了AppMessageConverter转换的过程
      * @return
@@ -60,5 +70,10 @@ public class TxController {
         Logger.d("download: ");
         File file = new File(PathManager.getInstance().getWebDir(), "1.mp4");
         return new FileBody(file);
+    }
+
+    @GetMapping(path = "/go_home")
+    String goHome() {
+        return "redirect:/index.html";
     }
 }
