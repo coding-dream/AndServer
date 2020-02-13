@@ -17,6 +17,7 @@ package com.yanzhenjie.andserver.sample;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -122,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.setDataAndType(Uri.fromFile(folder), "*/*");
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
-                startActivity(intent);
+                startActivityForResult(intent, 521);
                 break;
             }
             case R.id.btn_send_message: {
@@ -221,7 +222,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         intent.setType("*/*");
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         try {
-            startActivityForResult( Intent.createChooser(intent, "Select a File to Upload"), FILE_SELECT_CODE);
+            startActivityForResult(Intent.createChooser(intent, "Select a File to Upload"), FILE_SELECT_CODE);
         } catch (android.content.ActivityNotFoundException ex) {
             // Potentially direct the user to the Market with a Dialog
             Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
@@ -239,7 +240,64 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mTvPath.setText(finalPath);
                 }
                 break;
+            case 521:
+                // 尝试安装apk
+                if (resultCode == RESULT_OK) {
+                    Uri uri = data.getData();
+                    // Get the path
+                    CustomFileProvider.PathStrategy pathStrategy = CustomFileProvider.getPathStrategy(this, getPackageName() + ".fileprovider");
+                    String finalPath = pathStrategy.getFileForUri(uri).getAbsolutePath();
+                    File file = new File(finalPath);
+                    if (file.getAbsolutePath().endsWith(".apk")) {
+                        installApk(file);
+                    } else if (file.getAbsolutePath().endsWith(".png") || file.getAbsolutePath().endsWith(".jpg")) {
+                        openPhoto(file);
+                    }
+                }
+                break;
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private void openPhoto(File file) {
+        try {
+            Uri uri;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                uri = CustomFileProvider.getUriForFile(this, this.getPackageName() + ".fileprovider", file);
+            } else {
+                uri = Uri.fromFile(file);
+            }
+
+            Intent intent = new Intent();
+            intent.setAction(android.content.Intent.ACTION_VIEW);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.setDataAndType(uri, "image/*");
+            startActivity(intent);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 安装apk
+     */
+    private void installApk(File newApkFile) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            String type = "application/vnd.android.package-archive";
+            Uri uri;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                uri = CustomFileProvider.getUriForFile(this, this.getPackageName() + ".fileprovider", newApkFile);
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } else {
+                uri = Uri.fromFile(newApkFile);
+            }
+            intent.setDataAndType(uri, type);
+            startActivity(intent);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
