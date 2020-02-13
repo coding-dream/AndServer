@@ -15,10 +15,13 @@
  */
 package com.yanzhenjie.andserver.sample;
 
+import android.content.ContentResolver;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -245,18 +248,45 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (resultCode == RESULT_OK) {
                     Uri uri = data.getData();
                     // Get the path
-                    CustomFileProvider.PathStrategy pathStrategy = CustomFileProvider.getPathStrategy(this, getPackageName() + ".fileprovider");
-                    String finalPath = pathStrategy.getFileForUri(uri).getAbsolutePath();
+                    String finalPath;
+                    if (ContentResolver.SCHEME_CONTENT.equals(data.getScheme())) {
+                        finalPath = getRealPath(uri);
+                    } else {
+                        CustomFileProvider.PathStrategy pathStrategy = CustomFileProvider.getPathStrategy(this, getPackageName() + ".fileprovider");
+                        finalPath = pathStrategy.getFileForUri(uri).getAbsolutePath();
+                    }
+                    if (TextUtils.isEmpty(finalPath)) {
+                        return;
+                    }
+
                     File file = new File(finalPath);
                     if (file.getAbsolutePath().endsWith(".apk")) {
-                        installApk(file);
+                         installApk(file);
                     } else if (file.getAbsolutePath().endsWith(".png") || file.getAbsolutePath().endsWith(".jpg")) {
-                        openPhoto(file);
+                         openPhoto(file);
                     }
                 }
                 break;
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private String getRealPath(Uri uri) {
+        String data = uri.toString();
+        String realPath = "";
+        if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
+            Cursor cursor = this.getContentResolver().query(uri, new String[]{MediaStore.Images.ImageColumns.DATA}, null, null, null);
+            if (null != cursor) {
+                if (cursor.moveToFirst()) {
+                    int index = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
+                    if (index > -1) {
+                        realPath = cursor.getString(index);
+                    }
+                }
+                cursor.close();
+            }
+        }
+        return realPath;
     }
 
     private void openPhoto(File file) {
