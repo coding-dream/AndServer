@@ -44,6 +44,7 @@ import org.apache.httpcore.RequestLine;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -104,6 +105,17 @@ public class StandardRequest implements HttpRequest {
         String uriText = mRequestLine.getUri();
         if (StringUtils.isEmpty(uriText)) uriText = "/";
         return uriText;
+    }
+
+    public static String replaceURL(String oldURL) {
+        try {
+            oldURL = oldURL.replaceAll("%(?![0-9a-fA-F]{2})", "%25");
+            oldURL = oldURL.replaceAll("\\+", "%2B");
+            oldURL = URLDecoder.decode(oldURL, "UTF-8");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return oldURL;
     }
 
     private void parseUri() {
