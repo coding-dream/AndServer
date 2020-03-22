@@ -49,4 +49,6 @@ dependencies {
     implementation rootProject.ext.dependencies.commonsCollections
 
     implementation 'org.greenrobot:eventbus:3.0.0'
+
+    implementation "commons-io:commons-io:2.6"
 }

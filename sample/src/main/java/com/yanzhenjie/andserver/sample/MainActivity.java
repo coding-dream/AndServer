@@ -38,11 +38,13 @@ import com.yanzhenjie.andserver.sample.util.CustomFileProvider;
 import com.yanzhenjie.andserver.sample.website.PathManager;
 import com.yanzhenjie.loading.dialog.LoadingDialog;
 
+import org.apache.commons.io.FileUtils;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -58,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private EditText mEtSendMessage;
     private Button mBtnWebFolder;
     private Button mBtnSendMessage;
+    private View mBtnMove;
 
     private LoadingDialog mDialog;
     private String mRootUrl;
@@ -73,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mBtnStop = findViewById(R.id.btn_stop);
         mBtnWebFolder = findViewById(R.id.btn_web);
         mBtnBrowser = findViewById(R.id.btn_browse);
+        mBtnMove = findViewById(R.id.btn_move);
         mTvMessage = findViewById(R.id.tv_message);
         mTvPath = findViewById(R.id.tv_down_path);
         mEtSendMessage = findViewById(R.id.et_send_text_to_other);
@@ -83,6 +87,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mBtnBrowser.setOnClickListener(this);
         mBtnWebFolder.setOnClickListener(this);
         mBtnSendMessage.setOnClickListener(this);
+        mBtnMove.setOnClickListener(this);
 
         // AndServer run in the service.
         mServerManager = new ServerManager(this);
@@ -127,6 +132,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 intent.setDataAndType(Uri.fromFile(folder), "*/*");
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 startActivityForResult(intent, 521);
+                break;
+            }
+            case R.id.btn_move: {
+                showFileChooser();
                 break;
             }
             case R.id.btn_send_message: {
@@ -220,6 +229,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private static final int FILE_SELECT_CODE = 0;
+
     private void showFileChooser() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*");
@@ -236,33 +246,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (requestCode) {
             case FILE_SELECT_CODE:
                 if (resultCode == RESULT_OK) {
-                    Uri uri = data.getData();
-                    // Get the path
-                    CustomFileProvider.PathStrategy pathStrategy = CustomFileProvider.getPathStrategy(this, getPackageName() + ".fileprovider");
-                    String finalPath = pathStrategy.getFileForUri(uri).getAbsolutePath();
-                    mTvPath.setText(finalPath);
+                    copyToServerFolder(data);
                 }
                 break;
             case 521:
                 // 尝试安装apk
                 if (resultCode == RESULT_OK) {
-                    Uri uri = data.getData();
-                    // Get the path
-                    String finalPath;
-                    if (ContentResolver.SCHEME_CONTENT.equals(data.getScheme())) {
-                        finalPath = getRealPath(uri);
-                    } else {
-                        CustomFileProvider.PathStrategy pathStrategy = CustomFileProvider.getPathStrategy(this, getPackageName() + ".fileprovider");
-                        finalPath = pathStrategy.getFileForUri(uri).getAbsolutePath();
-                    }
-                    if (TextUtils.isEmpty(finalPath)) {
-                        return;
-                    }
-
+                    String finalPath = parseDataFromResult(data);
                     File file = new File(finalPath);
                     if (file.getAbsolutePath().endsWith(".apk")) {
                          installApk(file);
-                    } else if (file.getAbsolutePath().endsWith(".png") || file.getAbsolutePath().endsWith(".jpg")) {
+                    } else if (file.getAbsolutePath().endsWith(".png")
+                            || file.getAbsolutePath().endsWith(".jpg")
+                            || file.getAbsolutePath().endsWith(".mp4")) {
                          openPhoto(file);
                     }
                 }
@@ -271,8 +267,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    private void copyToServerFolder(Intent data) {
+        try {
+            String finalPath = parseDataFromResult(data);
+            File folder = new File(PathManager.getInstance().getWebDir(), "files");
+            FileUtils.copyFileToDirectory(new File(finalPath), folder);
+            if (mTvPath != null) {
+                mTvPath.setText(String.format("文件: %s 已拷贝到: %s 目录中", finalPath, folder.getAbsolutePath()));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String parseDataFromResult(Intent data) {
+        // Get the path
+        String finalPath = "";
+        Uri uri = data.getData();
+        if (uri == null) {
+            return finalPath;
+        }
+        if (ContentResolver.SCHEME_CONTENT.equals(data.getScheme())) {
+            finalPath = getRealPath(uri);
+        } else {
+            CustomFileProvider.PathStrategy pathStrategy = CustomFileProvider.getPathStrategy(this, getPackageName() + ".fileprovider");
+            finalPath = pathStrategy.getFileForUri(uri).getAbsolutePath();
+        }
+        if (TextUtils.isEmpty(finalPath)) {
+            Toast.makeText(this, "抱歉，解析的路径为空.", Toast.LENGTH_SHORT).show();
+        }
+        return finalPath;
+    }
+
     private String getRealPath(Uri uri) {
-        String data = uri.toString();
         String realPath = "";
         if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
             Cursor cursor = this.getContentResolver().query(uri, new String[]{MediaStore.Images.ImageColumns.DATA}, null, null, null);
