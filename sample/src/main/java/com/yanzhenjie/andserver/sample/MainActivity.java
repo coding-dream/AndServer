@@ -242,6 +242,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
             case FILE_SELECT_CODE:
@@ -270,7 +271,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void copyToServerFolder(Intent data) {
         try {
             String finalPath = parseDataFromResult(data);
-            File folder = new File(PathManager.getInstance().getWebDir(), "files");
+            File folder = new File(PathManager.getInstance().getWebDir());
             FileUtils.copyFileToDirectory(new File(finalPath), folder);
             if (mTvPath != null) {
                 mTvPath.setText(String.format("文件: %s 已拷贝到: %s 目录中", finalPath, folder.getAbsolutePath()));

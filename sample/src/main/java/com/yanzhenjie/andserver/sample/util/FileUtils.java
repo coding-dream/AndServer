@@ -48,7 +48,7 @@ public class FileUtils {
     }
 
     public static File createWebSiteFile(MultipartFile file) {
-        return new File(PathManager.getInstance().getWebDir() + File.separator + "files", file.getFilename());
+        return new File(PathManager.getInstance().getWebDir() + File.separator, file.getFilename());
     }
 
     /**

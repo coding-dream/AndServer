@@ -34,15 +34,11 @@ public class PathManager {
         } else {
             mRootDir = App.getInstance().getFilesDir();
         }
-        mRootDir = new File(mRootDir, "AndServer");
+        mRootDir = new File(mRootDir, "1111WEB");
         IOUtils.createFolder(mRootDir);
     }
 
-    public String getRootDir() {
-        return mRootDir.getAbsolutePath();
-    }
-
     public String getWebDir() {
-        return new File(mRootDir, "web").getAbsolutePath();
+        return mRootDir.getAbsolutePath();
     }
 }
