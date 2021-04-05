@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private LoadingDialog mDialog;
     private String mRootUrl;
+    private View mBtnClear;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +82,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mTvPath = findViewById(R.id.tv_down_path);
         mEtSendMessage = findViewById(R.id.et_send_text_to_other);
         mBtnSendMessage = findViewById(R.id.btn_send_message);
+        mBtnClear = findViewById(R.id.et_clear);
+
 
         mBtnStart.setOnClickListener(this);
         mBtnStop.setOnClickListener(this);
@@ -88,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mBtnWebFolder.setOnClickListener(this);
         mBtnSendMessage.setOnClickListener(this);
         mBtnMove.setOnClickListener(this);
+        mBtnClear.setOnClickListener(this);
 
         // AndServer run in the service.
         mServerManager = new ServerManager(this);
@@ -144,6 +148,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Toast.makeText(this, "发送成功，请主动访问浏览器", Toast.LENGTH_SHORT).show();
                 break;
             }
+            case R.id.et_clear: {
+                mEtSendMessage.setText("");
+                break;
+            }
+            default:
+                break;
         }
     }
 
@@ -210,7 +220,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (code) {
             case EventBusMessageId.MSG_LIVEHALL_GET_MESSAGE:
                 String message = (String) eventWrap.getData();
+
                 CopyHelper.copy(this, message);
+                if (mEtSendMessage != null) {
+                    mEtSendMessage.setText(message);
+                }
                 break;
             case EventBusMessageId.MSG_LIVEHALL_UPLOAD_FILE:
                 Toast.makeText(this, "上传成功", Toast.LENGTH_SHORT).show();
@@ -263,6 +277,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                          openPhoto(file);
                     }
                 }
+                break;
+            default:
                 break;
         }
         super.onActivityResult(requestCode, resultCode, data);
