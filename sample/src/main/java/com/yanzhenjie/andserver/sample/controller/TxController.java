@@ -30,6 +30,11 @@ public class TxController {
 
     @PostMapping(path = "/upload")
     String upload(@RequestParam(name = "uploadFile") MultipartFile file) throws IOException {
+        File folder = PathManager.getInstance().getUploadFileFolder();
+        if (!folder.exists()) {
+            boolean flag = folder.mkdirs();
+            Logger.d("服务器目录创建结果: " + flag);
+        }
         File localFile = FileUtils.createWebSiteFile(file);
         file.transferTo(localFile);
         Logger.d("Path: " + localFile.getAbsolutePath());

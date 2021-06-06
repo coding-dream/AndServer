@@ -36,6 +36,7 @@ import com.yanzhenjie.andserver.sample.model.EventWrapper;
 import com.yanzhenjie.andserver.sample.util.CopyHelper;
 import com.yanzhenjie.andserver.sample.util.CustomFileProvider;
 import com.yanzhenjie.andserver.sample.website.PathManager;
+import com.yanzhenjie.andserver.util.StringUtils;
 import com.yanzhenjie.loading.dialog.LoadingDialog;
 
 import org.apache.commons.io.FileUtils;
@@ -287,6 +288,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void copyToServerFolder(Intent data) {
         try {
             String finalPath = parseDataFromResult(data);
+            if (StringUtils.isEmpty(finalPath)) {
+                Toast.makeText(this, "文件路径解析为空！", Toast.LENGTH_SHORT).show();
+                return;
+            }
             File folder = PathManager.getInstance().getUploadFileFolder();
             FileUtils.copyFileToDirectory(new File(finalPath), folder);
             if (mTvPath != null) {
@@ -317,20 +322,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private String getRealPath(Uri uri) {
-        String realPath = "";
-        if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
-            Cursor cursor = this.getContentResolver().query(uri, new String[]{MediaStore.Images.ImageColumns.DATA}, null, null, null);
-            if (null != cursor) {
-                if (cursor.moveToFirst()) {
-                    int index = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
-                    if (index > -1) {
-                        realPath = cursor.getString(index);
-                    }
-                }
+        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+        String path = null;
+        if (cursor != null) {
+            cursor.moveToFirst();
+            String document_id = cursor.getString(0);
+            document_id = document_id.substring(document_id.lastIndexOf(":") + 1);
+            cursor.close();
+
+            cursor = getContentResolver().query(
+                    android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    null, MediaStore.Images.Media._ID + " = ? ", new String[]{document_id}, null);
+            if (cursor != null) {
+                cursor.moveToFirst();
+                path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
                 cursor.close();
             }
         }
-        return realPath;
+        return path;
     }
 
     private void openPhoto(File file) {
